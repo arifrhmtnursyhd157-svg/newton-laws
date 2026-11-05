@@ -1,0 +1,33 @@
+var SHEET_ID = "MASUKKAN_SPREADSHEET_ID_ANDA_DISINI";
+
+function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.openById(SHEET_ID).getActiveSheet();
+    var data = JSON.parse(e.postData.contents);
+    
+    // Ambil data yang dikirim dari website
+    var timestamp = new Date();
+    var nama = data.nama || "Anonim";
+    var topik = data.topik || "-";
+    var skor = data.skor || 0;
+    
+    // Masukkan ke baris baru di Google Sheet
+    sheet.appendRow([timestamp, nama, topik, skor]);
+    
+    return ContentService
+          .createTextOutput(JSON.stringify({ "status": "success", "message": "Data berhasil disimpan!" }))
+          .setMimeType(ContentService.MimeType.JSON);
+          
+  } catch(error) {
+    return ContentService
+          .createTextOutput(JSON.stringify({ "status": "error", "message": error.toString() }))
+          .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Opsional: Untuk mengetes koneksi GET
+function doGet(e) {
+  return ContentService
+        .createTextOutput("Backend Google Apps Script aktif!")
+        .setMimeType(ContentService.MimeType.TEXT);
+}
