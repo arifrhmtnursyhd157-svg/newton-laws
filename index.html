@@ -1,24 +1,1044 @@
-function simpanDataKeSheet() {
-    const urlWebApps = "https://script.google.com/macros/s/AKfycbxO4U_92mCv2EoJQW_UzYTmdyHqVAnyvNSHByxDtMmDjrImW40yYoPuG3Lz7jBkiIgE1w/exec"; // Tempel URL /exec di sini
-    
-    const dataKirim = {
-        nama: "Budi Santoso",
-        topik: "Hukum II Newton",
-        skor: 95
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NewtonLab v3.0 - Simulasi Interaktif Hukum Newton 1, 2, & 3</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js for Telemetry Graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Font: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(71, 85, 105, 1); }
+    .transition-fast { transition: all 0.15s ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- HEADER NAVBAR -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-50 px-4 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-3">
+    <div class="flex items-center space-x-3">
+      <div class="bg-gradient-to-tr from-sky-500 via-indigo-500 to-purple-600 p-2.5 rounded-xl shadow-lg shadow-sky-500/20 text-white">
+        <i class="fa-solid fa-atom text-2xl"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+          NewtonLab <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">v3.0 Interactive</span>
+        </h1>
+        <p class="text-xs text-slate-400">Laboratorium Virtual & Eksperimen Hukum Newton 1, 2, & 3</p>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 overflow-x-auto max-w-full">
+      <button id="nav-h1" onclick="switchMode('h1')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-fast bg-sky-600 text-white shadow">
+        <i class="fa-solid fa-feather text-amber-300"></i>
+        <span>Hukum I (Inersia)</span>
+      </button>
+      <button id="nav-h2" onclick="switchMode('h2')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-fast text-slate-400 hover:text-white hover:bg-slate-900">
+        <i class="fa-solid fa-gauge-high text-emerald-400"></i>
+        <span>Hukum II (F = m·a)</span>
+      </button>
+      <button id="nav-h3" onclick="switchMode('h3')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-fast text-slate-400 hover:text-white hover:bg-slate-900">
+        <i class="fa-solid fa-right-left text-purple-400"></i>
+        <span>Hukum III (Aksi-Reaksi)</span>
+      </button>
+      <button id="nav-quiz" onclick="switchMode('quiz')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-fast text-slate-400 hover:text-white hover:bg-slate-900">
+        <i class="fa-solid fa-graduation-cap text-amber-400"></i>
+        <span>Kuis / LKPD</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 flex flex-col gap-6">
+
+    <!-- SIMULATION PANELS (H1, H2, H3) -->
+    <div id="sim-container" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- LEFT CONTROL PANEL (4 cols) -->
+      <section class="lg:col-span-4 flex flex-col space-y-5">
+        
+        <!-- PRESETS PICKER CARD -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl">
+          <label class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Preset Skenario Dunia Nyata
+          </label>
+          <select id="preset-select" onchange="applyPreset()" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+            <!-- Dynamic options populating based on active law -->
+          </select>
+        </div>
+
+        <!-- DYNAMIC CONTROLS CARD -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex-1 flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-4">
+              <h2 id="control-panel-title" class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+                <i class="fa-solid fa-sliders text-sky-400"></i>
+                <span>Kontrol Parameter</span>
+              </h2>
+              <button onclick="resetPhysicsState()" class="text-xs text-slate-400 hover:text-rose-400 transition flex items-center space-x-1">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Reset Posisi</span>
+              </button>
+            </div>
+
+            <!-- CONTROLS FOR HUKUM 1 -->
+            <div id="controls-h1" class="space-y-4">
+              <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed">
+                <i class="fa-solid fa-circle-info text-sky-400 mr-1"></i>
+                <strong>Konsep Inersia:</strong> Berikan dorongan dorong singkat (*impulse*) lalu amati benda bergerak tanpa gesekan di luar angkasa / permukaan es licin.
+              </div>
+              <button onclick="applyImpulse(100)" class="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-sky-500/20 active:scale-95 transition flex items-center justify-center space-x-2 text-xs">
+                <i class="fa-solid fa-hand-back-fist"></i>
+                <span>Beri Impuls Dorongan Singkat (+100 N·s)</span>
+              </button>
+              <button onclick="applyImpulse(-100)" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl active:scale-95 transition text-xs border border-slate-700">
+                <span>Beri Impuls Arah Berlawanan (-100 N·s)</span>
+              </button>
+            </div>
+
+            <!-- CONTROLS FOR HUKUM 2 -->
+            <div id="controls-h2" class="space-y-4 hidden">
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span class="text-slate-300"><i class="fa-solid fa-cube text-indigo-400"></i> Massa Benda ($m$)</span>
+                  <span id="h2-mass-val" class="font-mono text-sky-400 font-bold">10 kg</span>
+                </div>
+                <input type="range" id="h2-mass" min="1" max="100" value="10" step="1" oninput="updatePhysicsParameters()" class="w-full accent-sky-500 bg-slate-800 h-2 rounded-lg cursor-pointer">
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span class="text-slate-300"><i class="fa-solid fa-hand-holding-hand text-emerald-400"></i> Gaya Dorong ($F_{dorong}$)</span>
+                  <span id="h2-force-val" class="font-mono text-emerald-400 font-bold">50 N</span>
+                </div>
+                <input type="range" id="h2-force" min="-300" max="300" value="50" step="5" oninput="updatePhysicsParameters()" class="w-full accent-emerald-500 bg-slate-800 h-2 rounded-lg cursor-pointer">
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span class="text-slate-300"><i class="fa-solid fa-road text-amber-400"></i> Koefisien Gesek Kinetis ($\mu_k$)</span>
+                  <span id="h2-fric-val" class="font-mono text-amber-400 font-bold">0.20</span>
+                </div>
+                <input type="range" id="h2-fric" min="0" max="0.8" value="0.2" step="0.05" oninput="updatePhysicsParameters()" class="w-full accent-amber-500 bg-slate-800 h-2 rounded-lg cursor-pointer">
+              </div>
+            </div>
+
+            <!-- CONTROLS FOR HUKUM 3 -->
+            <div id="controls-h3" class="space-y-4 hidden">
+              <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed">
+                <i class="fa-solid fa-circle-info text-purple-400 mr-1"></i>
+                <strong>Hukum III Newton:</strong> Setiap aksi ($F_{aksi}$) menghasilkan reaksi ($F_{reaksi}$) yang sama besar tetapi berlawanan arah pada dua benda berbeda.
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-medium mb-1">
+                  <span class="text-slate-300"><i class="fa-solid fa-hand-pointer text-purple-400"></i> Gaya Interaksi Inter-Benda ($F_{aksi}$)</span>
+                  <span id="h3-force-val" class="font-mono text-purple-400 font-bold">80 N</span>
+                </div>
+                <input type="range" id="h3-force" min="0" max="250" value="80" step="10" oninput="updatePhysicsParameters()" class="w-full accent-purple-500 bg-slate-800 h-2 rounded-lg cursor-pointer">
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] text-slate-400 block mb-1">Massa Mobil A</label>
+                  <input type="number" id="h3-m1" value="10" min="1" max="50" onchange="updatePhysicsParameters()" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-mono text-sky-400">
+                </div>
+                <div>
+                  <label class="text-[11px] text-slate-400 block mb-1">Massa Mobil B</label>
+                  <input type="number" id="h3-m2" value="10" min="1" max="50" onchange="updatePhysicsParameters()" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-mono text-purple-400">
+                </div>
+              </div>
+
+              <button onclick="triggerH3Interaction()" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl shadow-lg shadow-purple-600/20 active:scale-95 transition text-xs flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Cetuskan Gaya Aksi - Reaksi</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- PLAY / PAUSE BUTTONS -->
+          <div class="mt-6 pt-4 border-t border-slate-800 flex items-center gap-2">
+            <button id="btn-play" onclick="togglePlayPause()" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 active:scale-95 transition flex items-center justify-center space-x-2 text-xs">
+              <i id="play-icon" class="fa-solid fa-play"></i>
+              <span id="play-text">Mulai Simulasi</span>
+            </button>
+            <button onclick="logExperimentData()" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition text-xs flex items-center space-x-1" title="Catat Data ke LKPD">
+              <i class="fa-solid fa-bookmark text-sky-400"></i>
+              <span>Catat Data</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- FREE BODY DIAGRAM CARD (FBD) -->
+        <div id="fbd-card" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
+              <i class="fa-solid fa-arrows-to-dot text-amber-400"></i>
+              <span>Diagram Gaya Bebas (FBD)</span>
+            </h2>
+            <span class="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded border border-amber-500/20 font-mono">Skala Presisi</span>
+          </div>
+          
+          <div class="relative w-full h-36 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center overflow-hidden">
+            <canvas id="fbd-canvas" width="280" height="140" class="w-full h-full"></canvas>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT VISUALIZATION & TELEMETRY (8 cols) -->
+      <section class="lg:col-span-8 flex flex-col space-y-5">
+        
+        <!-- MAIN CANVAS VIEWPORT -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col relative">
+          
+          <!-- TELEMETRY HUD OVERLAY -->
+          <div class="absolute top-6 left-6 z-10 flex flex-wrap gap-2 pointer-events-none">
+            <div class="bg-slate-950/90 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono shadow">
+              <span class="text-slate-400">Gaya Total ($F_{net}$):</span> <span id="hud-fnet" class="text-sky-400 font-bold">0.0 N</span>
+            </div>
+            <div class="bg-slate-950/90 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono shadow">
+              <span class="text-slate-400">Percepatan ($a$):</span> <span id="hud-acc" class="text-emerald-400 font-bold">0.00 m/s²</span>
+            </div>
+            <div class="bg-slate-950/90 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono shadow">
+              <span class="text-slate-400">Kecepatan ($v$):</span> <span id="hud-vel" class="text-amber-400 font-bold">0.00 m/s</span>
+            </div>
+          </div>
+
+          <!-- MAIN CANVAS WORLD -->
+          <div class="relative w-full h-72 sm:h-80 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden shadow-inner">
+            <canvas id="world-canvas" class="w-full h-full block"></canvas>
+          </div>
+
+          <!-- SMART AI INSIGHT BADGE -->
+          <div class="mt-4 p-3.5 bg-slate-950 border border-slate-800 rounded-xl flex items-start space-x-3">
+            <div class="p-2 bg-sky-500/20 text-sky-400 rounded-lg mt-0.5">
+              <i class="fa-solid fa-lightbulb text-base"></i>
+            </div>
+            <div class="flex-1 text-xs">
+              <div class="flex justify-between items-center mb-1">
+                <span class="font-bold text-slate-200 uppercase text-[10px] tracking-wider">Smart Physics Insight</span>
+                <span id="law-status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">Hukum I Newton</span>
+              </div>
+              <p id="ai-insight-text" class="text-slate-300 leading-relaxed">
+                Benda dalam keadaan diam ($v = 0, a = 0$). Sesuai Hukum I Newton, benda akan tetap diam selama $F_{net} = 0$.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- REAL-TIME TELEMETRY GRAPH -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
+              <i class="fa-solid fa-chart-line text-emerald-400"></i>
+              <span>Grafik Real-Time (Kecepatan vs Waktu)</span>
+            </h2>
+            <button onclick="clearGraph()" class="text-[10px] text-slate-400 hover:text-slate-200 border border-slate-800 px-2 py-0.5 rounded">Reset Grafik</button>
+          </div>
+          <div class="w-full h-40 bg-slate-950 rounded-xl border border-slate-800 p-2">
+            <canvas id="telemetry-chart"></canvas>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- EXPERIMENT DATA LOG TABLE (12 cols) -->
+      <section id="table-section" class="lg:col-span-12 bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+          <div>
+            <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-2">
+              <i class="fa-solid fa-table-list text-purple-400"></i>
+              <span>Log Data Hasil Praktikum Virtual (LKPD)</span>
+            </h2>
+            <p class="text-xs text-slate-400">Data hasil eksperimen tercatat secara otomatis untuk kebutuhan laporan.</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="copyTableToClipboard()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition border border-slate-700 flex items-center space-x-1">
+              <i class="fa-solid fa-copy"></i>
+              <span>Salin Tabel</span>
+            </button>
+            <button onclick="clearTableData()" class="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+              <i class="fa-solid fa-trash-can"></i>
+              <span>Bersihkan Log</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 font-mono uppercase text-[10px] tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4"># No</th>
+                <th class="py-3 px-4">Mode Law</th>
+                <th class="py-3 px-4">Massa ($m$)</th>
+                <th class="py-3 px-4">F-Aksi / Dorong</th>
+                <th class="py-3 px-4">F-Gesek / Reaksi</th>
+                <th class="py-3 px-4 text-sky-400">F-Net ($F_{total}$)</th>
+                <th class="py-3 px-4 text-emerald-400">Percepatan ($a$)</th>
+                <th class="py-3 px-4 text-amber-400">Kecepatan ($v$)</th>
+              </tr>
+            </thead>
+            <tbody id="data-table-body" class="divide-y divide-slate-800/60 font-mono">
+              <tr id="empty-table-row" class="text-slate-500 text-center py-4">
+                <td colspan="8" class="py-6">Belum ada data dicatat. Klik tombol <b>"Catat Data"</b> untuk merekam data eksperimen.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- QUIZ / LKPD INTERACTIVE SECTION (Hidden by default) -->
+    <section id="quiz-container" class="hidden max-w-4xl mx-auto w-full space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex justify-between items-center pb-4 border-b border-slate-800">
+          <div>
+            <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-amber-400"></i> Kuis Interaktif Pemahaman Hukum Newton
+            </h2>
+            <p class="text-xs text-slate-400">Uji pemahaman konsep Hukum I, II, dan III Newton secara mandiri.</p>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl text-center">
+            <span class="text-[10px] text-slate-400 block uppercase">Skor Kuis</span>
+            <span id="quiz-score" class="text-lg font-black text-amber-400">0 / 100</span>
+          </div>
+        </div>
+
+        <!-- Quiz Questions Wrapper -->
+        <div id="quiz-questions-list" class="space-y-6 mt-6">
+          <!-- Dynamic Quiz Items populated by JS -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JAVASCRIPT PHYSICS ENGINE & UI LOGIC -->
+  <script>
+    // Global Physics State
+    let state = {
+      mode: 'h1', // 'h1', 'h2', 'h3', 'quiz'
+      isRunning: false,
+      
+      // H1 & H2 parameters
+      mass: 10.0,
+      fApp: 50.0,
+      muK: 0.20,
+      gravity: 9.81,
+      
+      // Dynamic Motion Variables
+      posX: 120,
+      vel: 0.0,
+      acc: 0.0,
+      fFric: 0.0,
+      fNet: 0.0,
+      fNorm: 98.1,
+      
+      // H3 specific parameters
+      m1: 10.0,
+      m2: 10.0,
+      x1: 120,
+      x2: 240,
+      v1: 0.0,
+      v2: 0.0,
+      a1: 0.0,
+      a2: 0.0,
+      h3InteractionActive: false,
+      h3Force: 80.0,
+      
+      // Engine Time
+      time: 0,
+      dt: 0.016
     };
 
-    fetch(urlWebApps, {
-        method: "POST",
-        mode: "no-cors", // Diperlukan untuk menghindari error CORS sederhana dari Apps Script
-        headers: {
-            "Content-Type": "application/json"
+    let logCounter = 1;
+    let telemetryChart = null;
+
+    // Canvases
+    const worldCanvas = document.getElementById('world-canvas');
+    const worldCtx = worldCanvas.getContext('2d');
+    const fbdCanvas = document.getElementById('fbd-canvas');
+    const fbdCtx = fbdCanvas.getContext('2d');
+
+    // Presets Configuration
+    const presets = {
+      h1: [
+        { name: "Inersia di Luar Angkasa (Hampa Udara)", mass: 10, fApp: 0, muK: 0 },
+        { name: "Meluncur di Atas Es Licin", mass: 15, fApp: 0, muK: 0.02 }
+      ],
+      h2: [
+        { name: "Mendorong Lemari Kayu", mass: 40, fApp: 120, muK: 0.35 },
+        { name: "Menarik Troli Belanja Ringan", mass: 5, fApp: 30, muK: 0.10 },
+        { name: "Mendorong Mobil Mogok Berat", mass: 90, fApp: 250, muK: 0.25 }
+      ],
+      h3: [
+        { name: "Dua Tabrakan Mobil Mainan Sama Massa", m1: 10, m2: 10, force: 80 },
+        { name: "Truk Besar Mendorong Mobil Kecil", m1: 40, m2: 10, force: 150 }
+      ]
+    };
+
+    // Initialization
+    window.onload = function() {
+      resizeCanvases();
+      initTelemetryChart();
+      switchMode('h1');
+      initQuiz();
+      
+      // Start Physics Loop
+      requestAnimationFrame(physicsLoop);
+    };
+
+    window.onresize = resizeCanvases;
+
+    function resizeCanvases() {
+      if (worldCanvas) {
+        worldCanvas.width = worldCanvas.parentElement.clientWidth;
+        worldCanvas.height = worldCanvas.parentElement.clientHeight;
+      }
+    }
+
+    // MODE SWITCHER
+    function switchMode(newMode) {
+      state.mode = newMode;
+      
+      // Update UI Tabs
+      ['h1', 'h2', 'h3', 'quiz'].forEach(m => {
+        const btn = document.getElementById(`nav-${m}`);
+        if (m === newMode) {
+          btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-fast bg-sky-600 text-white shadow";
+        } else {
+          btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-fast text-slate-400 hover:text-white hover:bg-slate-900";
+        }
+      });
+
+      const simContainer = document.getElementById('sim-container');
+      const quizContainer = document.getElementById('quiz-container');
+
+      if (newMode === 'quiz') {
+        simContainer.classList.add('hidden');
+        quizContainer.classList.remove('hidden');
+        return;
+      } else {
+        simContainer.classList.remove('hidden');
+        quizContainer.classList.add('hidden');
+      }
+
+      // Hide/Show controls
+      document.getElementById('controls-h1').classList.toggle('hidden', newMode !== 'h1');
+      document.getElementById('controls-h2').classList.toggle('hidden', newMode !== 'h2');
+      document.getElementById('controls-h3').classList.toggle('hidden', newMode !== 'h3');
+
+      // Populate Presets Select
+      populatePresets(newMode);
+      resetPhysicsState();
+    }
+
+    function populatePresets(mode) {
+      const select = document.getElementById('preset-select');
+      select.innerHTML = '';
+      if (presets[mode]) {
+        presets[mode].forEach((p, index) => {
+          const opt = document.createElement('option');
+          opt.value = index;
+          opt.innerText = p.name;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    function applyPreset() {
+      const idx = document.getElementById('preset-select').value;
+      const preset = presets[state.mode][idx];
+      if (!preset) return;
+
+      if (state.mode === 'h1' || state.mode === 'h2') {
+        if (preset.mass !== undefined) {
+          state.mass = preset.mass;
+          document.getElementById('h2-mass').value = preset.mass;
+        }
+        if (preset.fApp !== undefined) {
+          state.fApp = preset.fApp;
+          document.getElementById('h2-force').value = preset.fApp;
+        }
+        if (preset.muK !== undefined) {
+          state.muK = preset.muK;
+          document.getElementById('h2-fric').value = preset.muK;
+        }
+      } else if (state.mode === 'h3') {
+        state.m1 = preset.m1;
+        state.m2 = preset.m2;
+        state.h3Force = preset.force;
+        document.getElementById('h3-m1').value = preset.m1;
+        document.getElementById('h3-m2').value = preset.m2;
+        document.getElementById('h3-force').value = preset.force;
+      }
+
+      resetPhysicsState();
+    }
+
+    function applyImpulse(impulseVal) {
+      state.vel += impulseVal / state.mass;
+      state.isRunning = true;
+      updatePlayButtonUI();
+    }
+
+    function triggerH3Interaction() {
+      state.h3InteractionActive = true;
+      state.isRunning = true;
+      updatePlayButtonUI();
+      
+      // Impulse applied in opposite directions according to Newton's 3rd Law
+      state.v1 = -state.h3Force / state.m1;
+      state.v2 = state.h3Force / state.m2;
+    }
+
+    function updatePhysicsParameters() {
+      if (state.mode === 'h2') {
+        state.mass = parseFloat(document.getElementById('h2-mass').value);
+        state.fApp = parseFloat(document.getElementById('h2-force').value);
+        state.muK = parseFloat(document.getElementById('h2-fric').value);
+
+        document.getElementById('h2-mass-val').innerText = state.mass + ' kg';
+        document.getElementById('h2-force-val').innerText = state.fApp + ' N';
+        document.getElementById('h2-fric-val').innerText = state.muK.toFixed(2);
+      } else if (state.mode === 'h3') {
+        state.h3Force = parseFloat(document.getElementById('h3-force').value);
+        state.m1 = parseFloat(document.getElementById('h3-m1').value);
+        state.m2 = parseFloat(document.getElementById('h3-m2').value);
+
+        document.getElementById('h3-force-val').innerText = state.h3Force + ' N';
+      }
+
+      calculatePhysics();
+    }
+
+    function calculatePhysics() {
+      if (state.mode === 'h1') {
+        state.fApp = 0;
+        state.muK = 0; // Frictionless ideal H1 scenario
+        state.fFric = 0;
+        state.fNet = 0;
+        state.acc = 0;
+      } else if (state.mode === 'h2') {
+        state.fNorm = state.mass * state.gravity;
+        let maxFric = state.muK * state.fNorm;
+
+        if (Math.abs(state.vel) < 0.01) {
+          if (Math.abs(state.fApp) <= maxFric) {
+            state.fFric = -state.fApp;
+            state.fNet = 0;
+            state.acc = 0;
+          } else {
+            state.fFric = -Math.sign(state.fApp) * maxFric;
+            state.fNet = state.fApp + state.fFric;
+            state.acc = state.fNet / state.mass;
+          }
+        } else {
+          state.fFric = -Math.sign(state.vel) * maxFric;
+          state.fNet = state.fApp + state.fFric;
+          state.acc = state.fNet / state.mass;
+        }
+      }
+
+      updateHUDAndInsight();
+    }
+
+    // MAIN PHYSICS ENGINE LOOP
+    function physicsLoop() {
+      if (state.isRunning) {
+        if (state.mode === 'h1' || state.mode === 'h2') {
+          calculatePhysics();
+          
+          state.vel += state.acc * state.dt;
+          
+          // Terminal velocity cap
+          if (state.vel > 20) state.vel = 20;
+          if (state.vel < -20) state.vel = -20;
+
+          state.posX += state.vel * state.dt * 25;
+
+          // Screen wraps smoothly
+          if (worldCanvas) {
+            if (state.posX > worldCanvas.width + 40) state.posX = -40;
+            if (state.posX < -40) state.posX = worldCanvas.width + 40;
+          }
+
+          // Stop if friction reduces velocity near zero
+          if (Math.abs(state.fApp) <= Math.abs(state.fFric) && Math.abs(state.vel) < 0.05) {
+            state.vel = 0;
+            state.acc = 0;
+          }
+
+          state.time += state.dt;
+          appendChartData(state.time.toFixed(1), state.vel);
+
+        } else if (state.mode === 'h3') {
+          // H3 Motion logic for 2 bodies
+          state.x1 += state.v1 * state.dt * 20;
+          state.x2 += state.v2 * state.dt * 20;
+
+          // Gentle friction dampening for visualization
+          state.v1 *= 0.98;
+          state.v2 *= 0.98;
+        }
+      }
+
+      renderWorldCanvas();
+      renderFBDCanvas();
+
+      requestAnimationFrame(physicsLoop);
+    }
+
+    function updateHUDAndInsight() {
+      document.getElementById('hud-fnet').innerText = state.fNet.toFixed(1) + ' N';
+      document.getElementById('hud-acc').innerText = state.acc.toFixed(2) + ' m/s²';
+      document.getElementById('hud-vel').innerText = state.vel.toFixed(2) + ' m/s';
+
+      const badge = document.getElementById('law-status-badge');
+      const insight = document.getElementById('ai-insight-text');
+
+      if (state.mode === 'h1') {
+        badge.innerText = "Hukum I Newton (Inersia)";
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30";
+        if (Math.abs(state.vel) < 0.01) {
+          insight.innerHTML = "Benda diam. Sesuai <b>Hukum I Newton</b>, karena tidak ada gaya total ($F_{net} = 0$), benda tetap pertahankan posisi diamnya.";
+        } else {
+          insight.innerHTML = `Benda meluncur dengan <b>Kecepatan Konstan (${state.vel.toFixed(2)} m/s)</b> tanpa percepatan. Inilah sifat kelembaman / inersia!`;
+        }
+      } else if (state.mode === 'h2') {
+        badge.innerText = "Hukum II Newton (F = m · a)";
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        if (Math.abs(state.acc) > 0) {
+          insight.innerHTML = `Gaya total sebesar <b>${state.fNet.toFixed(1)} N</b> menyebabkan benda (${state.mass} kg) berakselerasi dengan percepatan <b>a = ${state.acc.toFixed(2)} m/s²</b>.`;
+        } else {
+          insight.innerHTML = "Gaya dorong tidak cukup kuat menembus gesekan statis. Gaya total $F_{net} = 0$. Benda belum bergerak.";
+        }
+      } else if (state.mode === 'h3') {
+        badge.innerText = "Hukum III Newton (Aksi-Reaksi)";
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30";
+        insight.innerHTML = `Mobil A memberikan gaya Aksi sebesar <b>+${state.h3Force} N</b> ke Mobil B. Secara bersamaan Mobil B memberikan gaya Reaksi sebesar <b>-${state.h3Force} N</b> ke Mobil A dengan besar yang persis sama tetapi arah berlawanan!`;
+      }
+    }
+
+    // CANVAS RENDER ENGINE
+    function renderWorldCanvas() {
+      if (!worldCanvas || !worldCtx) return;
+
+      const w = worldCanvas.width;
+      const h = worldCanvas.height;
+      const groundY = h - 60;
+
+      worldCtx.clearRect(0, 0, w, h);
+
+      // Background Sky & Grid Lines
+      worldCtx.fillStyle = '#020617';
+      worldCtx.fillRect(0, 0, w, h);
+
+      worldCtx.strokeStyle = '#1e293b';
+      worldCtx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        worldCtx.beginPath();
+        worldCtx.moveTo(x, 0);
+        worldCtx.lineTo(x, groundY);
+        worldCtx.stroke();
+      }
+
+      // Ground Surface
+      worldCtx.fillStyle = '#0f172a';
+      worldCtx.fillRect(0, groundY, w, h - groundY);
+      worldCtx.strokeStyle = state.mode === 'h1' ? '#38bdf8' : '#334155';
+      worldCtx.lineWidth = 3;
+      worldCtx.beginPath();
+      worldCtx.moveTo(0, groundY);
+      worldCtx.lineTo(w, groundY);
+      worldCtx.stroke();
+
+      if (state.mode === 'h1' || state.mode === 'h2') {
+        // Draw Crate Box
+        const size = 42;
+        const boxX = state.posX;
+        const boxY = groundY - size;
+
+        worldCtx.fillStyle = '#0284c7';
+        worldCtx.strokeStyle = '#38bdf8';
+        worldCtx.lineWidth = 2;
+        worldCtx.beginPath();
+        worldCtx.roundRect(boxX, boxY, size, size, 8);
+        worldCtx.fill();
+        worldCtx.stroke();
+
+        worldCtx.fillStyle = '#ffffff';
+        worldCtx.font = 'bold 11px Inter, sans-serif';
+        worldCtx.textAlign = 'center';
+        worldCtx.fillText(`${state.mass} kg`, boxX + size / 2, boxY + size / 2 + 4);
+
+        // Draw Force Vectors on Canvas
+        if (state.mode === 'h2') {
+          if (Math.abs(state.fApp) > 0) {
+            drawArrow(worldCtx, boxX + size / 2, boxY + size / 2, boxX + size / 2 + state.fApp * 0.6, boxY + size / 2, '#34d399', `F=${state.fApp}N`);
+          }
+          if (Math.abs(state.fFric) > 0) {
+            drawArrow(worldCtx, boxX + size / 2, boxY + size / 2 + 8, boxX + size / 2 + state.fFric * 0.6, boxY + size / 2 + 8, '#fb7185', `f=${Math.abs(state.fFric).toFixed(1)}N`);
+          }
+        }
+      } else if (state.mode === 'h3') {
+        // Draw Two Interactive Objects (Cars / Carts)
+        const size = 40;
+        const y = groundY - size;
+
+        // Car 1
+        worldCtx.fillStyle = '#0284c7';
+        worldCtx.beginPath();
+        worldCtx.roundRect(state.x1, y, size, size, 6);
+        worldCtx.fill();
+        worldCtx.fillStyle = '#fff';
+        worldCtx.font = 'bold 10px Inter';
+        worldCtx.textAlign = 'center';
+        worldCtx.fillText(`Mobil A (${state.m1}kg)`, state.x1 + size / 2, y + size / 2);
+
+        // Car 2
+        worldCtx.fillStyle = '#a855f7';
+        worldCtx.beginPath();
+        worldCtx.roundRect(state.x2, y, size, size, 6);
+        worldCtx.fill();
+        worldCtx.fillStyle = '#fff';
+        worldCtx.fillText(`Mobil B (${state.m2}kg)`, state.x2 + size / 2, y + size / 2);
+
+        // Action-Reaction Vectors
+        if (state.h3InteractionActive) {
+          drawArrow(worldCtx, state.x1 + size, y + size / 2, state.x1 + size + state.h3Force * 0.5, y + size / 2, '#34d399', `F_Aksi = +${state.h3Force}N`);
+          drawArrow(worldCtx, state.x2, y + size / 2, state.x2 - state.h3Force * 0.5, y + size / 2, '#fb7185', `F_Reaksi = -${state.h3Force}N`);
+        }
+      }
+    }
+
+    // FBD CANVAS RENDERER
+    function renderFBDCanvas() {
+      if (!fbdCanvas || !fbdCtx) return;
+
+      const w = fbdCanvas.width;
+      const h = fbdCanvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      fbdCtx.clearRect(0, 0, w, h);
+
+      // Center Point
+      fbdCtx.fillStyle = '#38bdf8';
+      fbdCtx.beginPath();
+      fbdCtx.arc(cx, cy, 8, 0, Math.PI * 2);
+      fbdCtx.fill();
+
+      if (state.mode === 'h2') {
+        const scale = 0.4;
+        if (state.fApp !== 0) drawArrow(fbdCtx, cx, cy, cx + state.fApp * scale, cy, '#34d399');
+        if (state.fFric !== 0) drawArrow(fbdCtx, cx, cy, cx + state.fFric * scale, cy, '#fb7185');
+        drawArrow(fbdCtx, cx, cy, cx, cy - (state.mass * state.gravity) * scale * 0.2, '#38bdf8');
+        drawArrow(fbdCtx, cx, cy, cx, cy + (state.mass * state.gravity) * scale * 0.2, '#c084fc');
+      } else if (state.mode === 'h3') {
+        drawArrow(fbdCtx, cx, cy, cx + state.h3Force * 0.4, cy, '#34d399');
+        drawArrow(fbdCtx, cx, cy, cx - state.h3Force * 0.4, cy, '#fb7185');
+      }
+    }
+
+    function drawArrow(ctx, fromX, fromY, toX, toY, color, label = '') {
+      const headlen = 7;
+      const dx = toX - fromX;
+      const dy = toY - fromY;
+      const angle = Math.atan2(dy, dx);
+
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2.5;
+
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.stroke();
+
+      if (Math.hypot(dx, dy) > 4) {
+        ctx.beginPath();
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      if (label) {
+        ctx.font = 'bold 9px Inter, sans-serif';
+        ctx.fillText(label, toX, toY - 6);
+      }
+    }
+
+    // TELEMETRY CHART.JS
+    function initTelemetryChart() {
+      const ctx = document.getElementById('telemetry-chart').getContext('2d');
+      telemetryChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Kecepatan v (m/s)',
+            data: [],
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            borderWidth: 2,
+            tension: 0.2,
+            pointRadius: 0
+          }]
         },
-        body: JSON.stringify(dataKirim)
-    })
-    .then(response => {
-        alert("Data berhasil dikirim ke Database Spreadsheet!");
-    })
-    .catch(error => {
-        console.error("Gagal mengirim data:", error);
-    });
-}
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 9 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 9 } } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function appendChartData(timeLabel, vel) {
+      if (!telemetryChart) return;
+      if (telemetryChart.data.labels.length > 40) {
+        telemetryChart.data.labels.shift();
+        telemetryChart.data.datasets[0].data.shift();
+      }
+      telemetryChart.data.labels.push(timeLabel);
+      telemetryChart.data.datasets[0].data.push(vel);
+      telemetryChart.update();
+    }
+
+    function clearGraph() {
+      if (telemetryChart) {
+        telemetryChart.data.labels = [];
+        telemetryChart.data.datasets[0].data = [];
+        telemetryChart.update();
+      }
+    }
+
+    // CONTROLS & UTILITIES
+    function togglePlayPause() {
+      state.isRunning = !state.isRunning;
+      updatePlayButtonUI();
+    }
+
+    function updatePlayButtonUI() {
+      const btn = document.getElementById('btn-play');
+      const icon = document.getElementById('play-icon');
+      const text = document.getElementById('play-text');
+
+      if (state.isRunning) {
+        btn.className = "flex-1 py-2.5 px-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg shadow-amber-600/20 active:scale-95 transition flex items-center justify-center space-x-2 text-xs";
+        icon.className = "fa-solid fa-pause";
+        text.innerText = "Jeda Simulasi";
+      } else {
+        btn.className = "flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 active:scale-95 transition flex items-center justify-center space-x-2 text-xs";
+        icon.className = "fa-solid fa-play";
+        text.innerText = "Mulai Simulasi";
+      }
+    }
+
+    function resetPhysicsState() {
+      state.isRunning = false;
+      state.posX = 120;
+      state.vel = 0;
+      state.acc = 0;
+      state.time = 0;
+
+      state.x1 = 120;
+      state.x2 = 240;
+      state.v1 = 0;
+      state.v2 = 0;
+      state.h3InteractionActive = false;
+
+      updatePlayButtonUI();
+      calculatePhysics();
+      clearGraph();
+    }
+
+    // EXPERIMENT LOGGING
+    function logExperimentData() {
+      const tbody = document.getElementById('data-table-body');
+      const emptyRow = document.getElementById('empty-table-row');
+      if (emptyRow) emptyRow.remove();
+
+      const row = document.createElement('tr');
+      row.className = "hover:bg-slate-800/50 transition";
+
+      const modeName = state.mode === 'h1' ? "Hukum I" : state.mode === 'h2' ? "Hukum II" : "Hukum III";
+      const fAction = state.mode === 'h3' ? state.h3Force : state.fApp;
+      const fFricVal = state.mode === 'h3' ? -state.h3Force : state.fFric;
+
+      row.innerHTML = `
+        <td class="py-2.5 px-4 font-bold text-slate-400">#${logCounter++}</td>
+        <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-sky-400 text-[10px] font-bold">${modeName}</span></td>
+        <td class="py-2.5 px-4">${state.mass} kg</td>
+        <td class="py-2.5 px-4">${fAction.toFixed(1)} N</td>
+        <td class="py-2.5 px-4">${fFricVal.toFixed(1)} N</td>
+        <td class="py-2.5 px-4 text-sky-400 font-bold">${state.fNet.toFixed(1)} N</td>
+        <td class="py-2.5 px-4 text-emerald-400 font-bold">${state.acc.toFixed(2)} m/s²</td>
+        <td class="py-2.5 px-4 text-amber-400 font-bold">${state.vel.toFixed(2)} m/s</td>
+      `;
+
+      tbody.appendChild(row);
+    }
+
+    function clearTableData() {
+      logCounter = 1;
+      document.getElementById('data-table-body').innerHTML = `
+        <tr id="empty-table-row" class="text-slate-500 text-center py-4">
+          <td colspan="8" class="py-6">Belum ada data dicatat. Klik tombol <b>"Catat Data"</b> untuk merekam data eksperimen.</td>
+        </tr>
+      `;
+    }
+
+    function copyTableToClipboard() {
+      let text = "No\tMode\tMassa (kg)\tF-Aksi (N)\tF-Reaksi/Gesek (N)\tF-Net (N)\tPercepatan (m/s2)\tKecepatan (m/s)\n";
+      const rows = document.querySelectorAll('#data-table-body tr');
+      rows.forEach(r => {
+        const cols = r.querySelectorAll('td');
+        if (cols.length > 1) {
+          let rowData = [];
+          cols.forEach(c => rowData.push(c.innerText.trim()));
+          text += rowData.join('\t') + '\n';
+        }
+      });
+
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      alert('Tabel Data Praktikum berhasil disalin ke clipboard!');
+    }
+
+    // QUIZ SYSTEM
+    const quizQuestions = [
+      {
+        q: "Sebuah benda diletakkan di atas lantai tanpa gesekan ($\mu = 0$). Jika tidak ada gaya luar yang bekerja padanya ($F_{net} = 0$), maka benda akan...",
+        options: [
+          "Bergerak dengan percepatan konstan",
+          "Tetap diam atau bergerak dengan kecepatan konstan (Hukum I Newton)",
+          "Langsung berhenti bergerak seketika",
+          "Mengalami percepatan searah dengan percepatan gravitasi"
+        ],
+        correct: 1,
+        explanation: "Sesuai Hukum I Newton (Inersia), jika gaya total nol ($F_{net} = 0$), benda yang diam akan tetap diam, dan benda yang bergerak akan terus bergerak dengan kecepatan konstan."
+      },
+      {
+        q: "Sebuah balok bermassa $10 \\text{ kg}$ didorong dengan gaya sebesar $50 \\text{ N}$. Jika gaya gesekan kinetis adalah $10 \\text{ N}$, berapa percepatan benda tersebut?",
+        options: [
+          "$2.0 \\text{ m/s}^2$",
+          "$4.0 \\text{ m/s}^2$",
+          "$5.0 \\text{ m/s}^2$",
+          "$6.0 \\text{ m/s}^2$"
+        ],
+        correct: 1,
+        explanation: "$F_{net} = F_{dorong} - F_{gesek} = 50 - 10 = 40 \\text{ N}$. Berdasarkan Hukum II Newton ($a = F_{net} / m$), $a = 40 / 10 = 4.0 \\text{ m/s}^2$."
+      },
+      {
+        q: "Ketika Anda menendang bola ke depan dengan gaya $100 \\text{ N}$, bola memberikan gaya reaksi ke kaki Anda sebesar...",
+        options: [
+          "$0 \\text{ N}$",
+          "$50 \\text{ N}$ ke belakang",
+          "$100 \\text{ N}$ ke belakang (berlawanan arah)",
+          "$200 \\text{ N}$ ke depan"
+        ],
+        correct: 2,
+        explanation: "Berdasarkan Hukum III Newton ($F_{aksi} = -F_{reaksi}$), setiap aksi memberikan reaksi dengan besar yang sama persis ($100 \\text{ N}$) namun berlawanan arah."
+      }
+    ];
+
+    function initQuiz() {
+      const container = document.getElementById('quiz-questions-list');
+      container.innerHTML = '';
+
+      quizQuestions.forEach((q, idx) => {
+        const qCard = document.createElement('div');
+        qCard.className = "bg-slate-950 border border-slate-800 p-5 rounded-xl space-y-3";
+        qCard.innerHTML = `
+          <h3 class="text-xs font-bold text-slate-200">${idx + 1}. ${q.q}</h3>
+          <div class="space-y-2">
+            ${q.options.map((opt, oIdx) => `
+              <button onclick="checkAnswer(${idx}, ${oIdx})" id="q-${idx}-opt-${oIdx}" class="w-full text-left p-3 rounded-lg bg-slate-900 border border-slate-800 hover:border-sky-500/50 text-xs text-slate-300 transition">
+                ${String.fromCharCode(65 + oIdx)}. ${opt}
+              </button>
+            `).join('')}
+          </div>
+          <p id="q-${idx}-feedback" class="text-xs hidden p-3 rounded-lg font-medium leading-relaxed"></p>
+        `;
+        container.appendChild(qCard);
+      });
+    }
+
+    let userScore = 0;
+    let answered = {};
+
+    function checkAnswer(qIdx, optIdx) {
+      if (answered[qIdx]) return;
+      answered[qIdx] = true;
+
+      const q = quizQuestions[qIdx];
+      const feedback = document.getElementById(`q-${qIdx}-feedback`);
+      const selectedBtn = document.getElementById(`q-${qIdx}-opt-${optIdx}`);
+
+      feedback.classList.remove('hidden');
+
+      if (optIdx === q.correct) {
+        userScore += Math.round(100 / quizQuestions.length);
+        selectedBtn.className = "w-full text-left p-3 rounded-lg bg-emerald-500/20 border border-emerald-500/50 text-xs text-emerald-300 font-semibold";
+        feedback.className = "text-xs p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300";
+        feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> <b>Benar!</b> ${q.explanation}`;
+      } else {
+        selectedBtn.className = "w-full text-left p-3 rounded-lg bg-rose-500/20 border border-rose-500/50 text-xs text-rose-300 font-semibold";
+        feedback.className = "text-xs p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300";
+        feedback.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> <b>Salah.</b> ${q.explanation}`;
+      }
+
+      document.getElementById('quiz-score').innerText = `${userScore} / 100`;
+    }
+  </script>
+</body>
+</html>
