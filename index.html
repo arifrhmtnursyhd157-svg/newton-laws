@@ -1,33 +1,24 @@
-var SHEET_ID = "1oxcKoL5fZiJrc25q3ed1KUXTF_jEU2mEAnZG3215BHA";
+function simpanDataKeSheet() {
+    const urlWebApps = "https://script.google.com/macros/s/AKfycbxO4U_92mCv2EoJQW_UzYTmdyHqVAnyvNSHByxDtMmDjrImW40yYoPuG3Lz7jBkiIgE1w/exec"; // Tempel URL /exec di sini
+    
+    const dataKirim = {
+        nama: "Budi Santoso",
+        topik: "Hukum II Newton",
+        skor: 95
+    };
 
-function doPost(e) {
-  try {
-    var sheet = SpreadsheetApp.openById(SHEET_ID).getActiveSheet();
-    var data = JSON.parse(e.postData.contents);
-    
-    // Ambil data yang dikirim dari website
-    var timestamp = new Date();
-    var nama = data.nama || "Anonim";
-    var topik = data.topik || "-";
-    var skor = data.skor || 0;
-    
-    // Masukkan ke baris baru di Google Sheet
-    sheet.appendRow([timestamp, nama, topik, skor]);
-    
-    return ContentService
-          .createTextOutput(JSON.stringify({ "status": "success", "message": "Data berhasil disimpan!" }))
-          .setMimeType(ContentService.MimeType.JSON);
-          
-  } catch(error) {
-    return ContentService
-          .createTextOutput(JSON.stringify({ "status": "error", "message": error.toString() }))
-          .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-// Opsional: Untuk mengetes koneksi GET
-function doGet(e) {
-  return ContentService
-        .createTextOutput("Backend Google Apps Script aktif!")
-        .setMimeType(ContentService.MimeType.TEXT);
+    fetch(urlWebApps, {
+        method: "POST",
+        mode: "no-cors", // Diperlukan untuk menghindari error CORS sederhana dari Apps Script
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataKirim)
+    })
+    .then(response => {
+        alert("Data berhasil dikirim ke Database Spreadsheet!");
+    })
+    .catch(error => {
+        console.error("Gagal mengirim data:", error);
+    });
 }
